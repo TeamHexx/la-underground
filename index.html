@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LA Underground</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000;--bg2:#1c1c1e;--bg3:#2c2c2e;--bg4:#3a3a3c;
+  --green:#30D158;--green2:#5EE87A;--green3:#25A244;
+  --border:#222;--border2:#333;--border3:#444;
+  --font:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
+}
+body{background:var(--bg);color:#e0e0e0;font-family:var(--font);min-height:100vh}
+.app{padding:1.5rem 1.25rem;max-width:980px;margin:0 auto}
+
+/* MASTHEAD */
+.mast{margin-bottom:1.5rem;padding-bottom:14px;border-bottom:1px solid var(--border2);display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.mast-title{font-size:26px;font-weight:700;letter-spacing:.5px;background:linear-gradient(135deg,#30D158,#25A244,#34C759);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.mast-sub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-top:3px}
+.mast-actions{display:flex;gap:8px}
+
+/* BUTTONS */
+.btn{padding:7px 15px;border:none;background:var(--bg3);font-family:var(--font);font-size:12px;cursor:pointer;color:#C8C8C8;display:inline-flex;align-items:center;gap:5px;transition:all .15s;border-radius:8px;font-weight:500}
+.btn:hover{background:var(--bg4);color:#fff}
+.btn.green{background:linear-gradient(135deg,#30D158,#25A244);color:#fff;font-weight:600}
+.btn.green:hover{background:linear-gradient(135deg,#3adc62,#2ab44d)}
+.btn.outline{background:transparent;border:1px solid #444;color:#C8C8C8}
+.btn.outline:hover{border-color:#C8C8C8;color:#fff}
+.btn.sm{font-size:11px;padding:4px 10px;border-radius:6px}
+.btn.approve{background:#1a3a25;color:#30D158;border:1px solid #30D15844}
+.btn.approve:hover{background:#30D158;color:#000}
+.btn.staffpick{background:#2a2a00;color:#FFD60A;border:1px solid #FFD60A44}
+.btn.staffpick:hover{background:#FFD60A;color:#000}
+.btn.reject{background:#3a1a1a;color:#FF453A;border:1px solid #FF453A44}
+.btn.reject:hover{background:#FF453A;color:#fff}
+.btn.danger{background:#3a1a1a;color:#FF453A;border:1px solid #FF453A44}
+.btn.danger:hover{background:#FF453A;color:#fff}
+
+/* SEARCH */
+.sb{display:flex;gap:8px;margin-bottom:1rem}
+.sb input{flex:1;padding:10px 14px;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;color:#e0e0e0;font-family:var(--font);font-size:14px;outline:none}
+.sb input:focus{border-color:var(--green)}
+.sb input::placeholder{color:#444}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem;overflow-x:auto;gap:0}
+.tab{padding:9px 16px;font-size:12px;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .12s;font-weight:500}
+.tab:hover{color:#C8C8C8}
+.tab.a{color:#30D158;border-bottom-color:#30D158;font-weight:600}
+.tbg{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;background:#30D158;color:#000;font-size:10px;font-weight:700;margin-left:4px;padding:0 4px;border-radius:4px}
+.tbg.s{background:#444;color:#C8C8C8}
+
+/* DATE STRIP */
+.ds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;padding:10px 12px;background:var(--bg2);border-radius:10px;align-items:center}
+.dc{padding:5px 13px;background:var(--bg3);border:none;font-family:var(--font);font-size:12px;cursor:pointer;color:#C8C8C8;border-radius:20px;transition:all .12s;font-weight:500}
+.dc:hover{background:var(--bg4);color:#fff}
+.dc.a{background:linear-gradient(135deg,#30D158,#25A244);color:#fff;font-weight:600}
+.diw{display:flex;align-items:center;gap:4px}
+.diw label{font-size:10px;color:#666;letter-spacing:.5px;white-space:nowrap}
+.diw input[type=date]{padding:4px 8px;background:var(--bg3);border:none;border-radius:6px;color:#C8C8C8;font-family:var(--font);font-size:11px;outline:none}
+
+/* FILTERS */
+.fr{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;align-items:center}
+.fl{font-size:10px;color:#666;letter-spacing:1px;text-transform:uppercase;margin-right:3px;white-space:nowrap}
+.fgroup{display:flex;flex-wrap:wrap;gap:4px}
+.ch{display:inline-flex;align-items:center;padding:4px 11px;background:var(--bg2);border:none;font-family:var(--font);font-size:11px;cursor:pointer;color:#C8C8C8;border-radius:12px;transition:all .12s}
+.ch:hover{background:var(--bg3);color:#fff}
+.ch.a{background:#1a3a25;color:#30D158;outline:1px solid #30D15844}
+.dv{width:1px;height:16px;background:var(--border2);flex-shrink:0;margin:0 2px}
+
+/* RESULTS HDR */
+.rh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:5px}
+.rh span{font-size:12px;color:#888}
+.rh label{font-size:12px;color:#888;display:flex;align-items:center;gap:5px;cursor:pointer}
+
+/* CARDS */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.sc{background:var(--bg2);border-radius:12px;overflow:hidden;transition:transform .12s}
+.sc:hover{transform:translateY(-1px)}
+.sc-bar{height:3px;background:var(--bg3)}
+.sc.sp .sc-bar{background:linear-gradient(90deg,#30D158,#25A244)}
+.ch2{padding:11px 13px 9px}
+.cd{font-size:11px;color:#30D158;margin-bottom:3px;font-weight:500}
+.sc:not(.sp) .cd{color:#888}
+.ct{font-size:14px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:2px}
+.cv{font-size:12px;color:#666}
+.cb{padding:8px 13px 12px}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.tag{font-size:10px;padding:3px 9px;border-radius:10px;font-weight:500}
+.ttype{background:#30D15820;color:#30D158}
+.tgenre{background:#ffffff10;color:#C8C8C8}
+.tage{background:#ffffff08;color:#888}
+.tlocal{background:#30D15815;color:#5EE87A}
+.ttour{background:#FFD60A15;color:#FFD60A}
+.thood{background:#0A84FF15;color:#64A8FF}
+.tsp{background:#30D15820;color:#5EE87A;font-weight:700}
+.tsaved{background:#FFD60A15;color:#FFD60A}
+.tkar{background:#BF5AF215;color:#BF5AF2}
+.tpend{background:#FFD60A15;color:#FFD60A}
+.cn{font-size:12px;color:#666;margin-bottom:7px;line-height:1.4}
+.ca{display:flex;gap:5px;flex-wrap:wrap}
+.ry{background:#1a3a25;border-left:2px solid #30D158;padding:5px 9px;font-size:11px;color:#5EE87A;margin-bottom:7px;border-radius:0 6px 6px 0}
+
+/* PENDING BANNER */
+.pb{background:#1a2a1a;border:1px solid #30D15844;border-radius:10px;padding:10px 14px;font-size:12px;color:#30D158;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+
+/* EMPTY */
+.emp{text-align:center;padding:3rem 1rem;color:#333}
+.emp-icon{font-size:36px;margin-bottom:10px;color:#333}
+.emp div{font-size:12px;color:#444}
+
+/* PREFS */
+.pb2{background:var(--bg2);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.pb2 h3{font-size:12px;letter-spacing:.5px;color:#C8C8C8;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;font-weight:600}
+.pc{display:inline-flex;align-items:center;gap:3px;padding:4px 11px;background:var(--bg3);border:none;font-family:var(--font);font-size:11px;cursor:pointer;color:#C8C8C8;border-radius:12px;margin:2px;transition:all .12s}
+.pc:hover{background:var(--bg4);color:#fff}
+.pc.on{background:#1a3a25;color:#30D158;outline:1px solid #30D15844}
+.prow{display:flex;flex-wrap:wrap;gap:14px}
+.pcol{min-width:120px}
+.pclbl{font-size:10px;color:#666;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+
+/* KARAOKE */
+.dstrip{display:flex;flex-wrap:wrap;gap:5px}
+.db{padding:5px 12px;background:var(--bg2);border:none;font-family:var(--font);font-size:11px;cursor:pointer;color:#C8C8C8;border-radius:20px;transition:all .12s}
+.db:hover{background:var(--bg3);color:#fff}
+.db.a{background:linear-gradient(135deg,#30D158,#25A244);color:#fff;font-weight:600}
+.sn{font-size:11px;color:#555;margin-bottom:10px}
+.sn a{color:#888;text-decoration:underline}
+
+/* MOD */
+.mc3{background:var(--bg2);border-radius:12px;margin-bottom:10px;padding:14px 16px;border-left:3px solid #30D15844}
+.mch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.mct{font-size:14px;font-weight:700;color:#fff}
+.mcs{font-size:12px;color:#666;margin-top:2px}
+.mfi{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;margin-bottom:8px;font-size:12px;color:#666}
+.mfi strong{color:#C8C8C8}
+.ma{display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--border)}
+.me{text-align:center;padding:2rem;color:#333;font-size:12px;background:var(--bg2);border-radius:12px}
+.ms{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.sp2{padding:6px 14px;background:var(--bg2);border-radius:8px;font-size:12px;color:#888}
+.sp2 span{color:#e0e0e0;font-weight:600;margin-left:4px}
+
+/* MODALS */
+.mbk{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
+.mo{background:#1c1c1e;border:1px solid var(--border2);border-radius:16px;padding:1.5rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.mo h2{font-size:16px;font-weight:700;color:#fff;margin-bottom:1rem}
+.mc4{float:right;cursor:pointer;background:none;border:none;font-size:20px;color:#555;line-height:1;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.mc4:hover{background:var(--bg3);color:#fff}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:11px;color:#888;margin-bottom:4px;font-weight:500}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:#e0e0e0;font-family:var(--font);font-size:13px;outline:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--green)}
+.fg textarea{min-height:70px;resize:vertical}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mf3{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+.vl{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.vp{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--bg3);border-radius:8px;font-size:12px;color:#C8C8C8}
+.vp button{background:none;border:none;cursor:pointer;color:#555;font-size:14px;padding:0;line-height:1}
+.vp button:hover{color:#FF453A}
+.avr{display:flex;gap:6px;margin-top:8px}
+.avr input{padding:8px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:#e0e0e0;font-family:var(--font);font-size:12px;flex:1;outline:none}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="mast">
+  <div>
+    <div class="mast-title">LA Underground</div>
+    <div class="mast-sub">Bands &middot; DJ &middot; Dance &middot; Art &middot; Karaoke &middot; Los Angeles</div>
+  </div>
+  <div class="mast-actions">
+    <button class="btn green" onclick="openSubmit()">+ Submit a show</button>
+    <button class="btn outline" onclick="openVenues()">&#9632; Venues</button>
+  </div>
+</div>
+
+<div class="pb" id="modBanner" style="display:none">
+  &#9654; <strong id="pendingCount">0</strong> submission(s) awaiting review &mdash;
+  <a href="#" onclick="sw('mod');return false" style="color:#5EE87A;text-decoration:underline">review now</a>
+</div>
+
+<div class="sb">
+  <input type="text" placeholder="Search artists, venues, neighborhoods..." id="searchInput" oninput="onSearch()">
+</div>
+
+<div class="tabs">
+  <div class="tab a" id="tab-browse" onclick="sw('browse')">Browse</div>
+  <div class="tab" id="tab-foryou" onclick="sw('foryou')">&#9733; For you</div>
+  <div class="tab" id="tab-karaoke" onclick="sw('karaoke')">&#9834; Karaoke</div>
+  <div class="tab" id="tab-saved" onclick="sw('saved')">Saved <span class="tbg s" id="savedBadge">0</span></div>
+  <div class="tab" id="tab-mod" onclick="sw('mod')">Mod queue <span class="tbg" id="modBadge" style="display:none">0</span></div>
+</div>
+
+<!-- BROWSE -->
+<div id="pane-browse">
+  <div class="ds">
+    <div class="dc" id="dc-today" onclick="sdp('today')">Tonight</div>
+    <div class="dc" id="dc-tomorrow" onclick="sdp('tomorrow')">Tomorrow</div>
+    <div class="dc" id="dc-week" onclick="sdp('week')">This week</div>
+    <div class="dc" id="dc-weekend" onclick="sdp('weekend')">Weekend</div>
+    <div class="dc" id="dc-month" onclick="sdp('month')">Month</div>
+    <div class="dc a" id="dc-all" onclick="sdp('all')">All upcoming</div>
+    <div class="diw"><label>From</label><input type="date" id="dateFrom" onchange="ocd()"></div>
+    <div class="diw"><label>To</label><input type="date" id="dateTo" onchange="ocd()"></div>
+  </div>
+  <div class="fr">
+    <span class="fl">Type</span><div class="fgroup" id="typeFilters"></div>
+    <div class="dv"></div>
+    <span class="fl">Genre</span><div class="fgroup" id="genreFilters"></div>
+    <div class="dv"></div>
+    <span class="fl">Age</span><div class="fgroup" id="ageFilters"></div>
+    <div class="dv"></div>
+    <span class="fl">Origin</span><div class="fgroup" id="originFilters"></div>
+    <div class="dv"></div>
+    <span class="fl">Hood</span><div class="fgroup" id="hoodFilters"></div>
+  </div>
+  <div class="rh">
+    <span id="rc">Loading...</span>
+    <label><input type="checkbox" id="recOnly" onchange="render()" style="accent-color:var(--green)"> Staff picks only</label>
+  </div>
+  <div class="grid" id="showsGrid"></div>
+  <div class="emp" id="emptyState" style="display:none">
+    <div class="emp-icon">&#9834;</div>
+    <div id="emptyMsg">No shows match — try broadening your filters</div>
+  </div>
+</div>
+
+<!-- FOR YOU -->
+<div id="pane-foryou" style="display:none">
+  <div class="pb2">
+    <h3><span>&#9733; Taste profile</span><button class="btn sm outline" onclick="clrP()">&#8635; Reset</button></h3>
+    <p style="font-size:11px;color:#666;margin-bottom:12px">Pick what you're into — we rank shows for you</p>
+    <div class="prow">
+      <div class="pcol"><div class="pclbl">Genres</div><div id="prefGenres"></div></div>
+      <div class="pcol"><div class="pclbl">Types</div><div id="prefTypes"></div></div>
+      <div class="pcol"><div class="pclbl">Hoods</div><div id="prefHoods"></div></div>
+      <div class="pcol"><div class="pclbl">Origin</div><div id="prefOrigins"></div></div>
+    </div>
+  </div>
+  <div class="rh"><span id="fyc"></span><span style="font-size:11px;color:#666">sorted by match score</span></div>
+  <div id="fyGrid"></div>
+  <div class="emp" id="fyEmpty" style="display:none"><div class="emp-icon">&#9733;</div><div>Set your taste profile above to get recommendations</div></div>
+</div>
+
+<!-- KARAOKE -->
+<div id="pane-karaoke" style="display:none">
+  <div class="sn">Data from <a href="https://krmr.com/karaoke/" target="_blank">Casey's Karaoke List</a> (updated Feb 2026). Always call ahead.</div>
+  <div class="fr" style="flex-direction:column;align-items:flex-start;gap:8px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="fl">Day</span><div class="dstrip" id="dayStrip"></div></div>
+    <div class="fr"><span class="fl">Format</span><div class="fgroup" id="karFmt"></div><div class="dv"></div><span class="fl">Area</span><div class="fgroup" id="karArea"></div></div>
+  </div>
+  <div class="rh"><span id="kc"></span></div>
+  <div class="grid" id="karGrid"></div>
+  <div class="emp" id="karEmpty" style="display:none"><div class="emp-icon">&#9834;</div><div>No karaoke nights match</div></div>
+</div>
+
+<!-- SAVED -->
+<div id="pane-saved" style="display:none">
+  <div class="emp" id="savedEmpty"><div class="emp-icon">&#9830;</div><div>Save shows with the bookmark button on any card</div></div>
+  <div class="grid" id="savedGrid" style="display:none"></div>
+</div>
+
+<!-- MOD QUEUE -->
+<div id="pane-mod" style="display:none">
+  <div class="ms">
+    <div class="sp2">Pending <span id="st-p">0</span></div>
+    <div class="sp2">Approved <span id="st-a">0</span></div>
+    <div class="sp2">Rejected <span id="st-r">0</span></div>
+  </div>
+  <div id="modQ"></div>
+  <div style="margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1rem">
+    <div style="font-size:11px;color:#666;margin-bottom:8px;font-weight:600">Recently approved</div>
+    <div id="appList"></div>
+  </div>
+</div>
+
+</div>
+
+<!-- SUBMIT MODAL -->
+<div class="mbk" id="submitModal" style="display:none" onclick="cmo(event,'submitModal')">
+<div class="mo" onclick="event.stopPropagation()">
+  <button class="mc4" onclick="cm('submitModal')">&#10005;</button>
+  <h2>Submit a show</h2>
+  <p style="font-size:11px;color:#888;margin-bottom:1rem">Reviewed by mods before going live</p>
+  <div class="frow">
+    <div class="fg"><label>Artist / Event *</label><input type="text" id="s_artist" placeholder="e.g. Biblioteka"></div>
+    <div class="fg"><label>Date *</label><input type="date" id="s_date"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Venue *</label><select id="s_venue"></select></div>
+    <div class="fg"><label>Time</label><input type="time" id="s_time"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Type *</label><select id="s_type"><option value="">Select...</option><option>Band</option><option>DJ</option><option>Dance</option><option>Art</option><option>Karaoke</option></select></div>
+    <div class="fg"><label>Genre</label><input type="text" id="s_genre" placeholder="Punk, Garage, Techno..."></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>Age restriction</label><select id="s_age"><option>All ages</option><option>18+</option><option>21+</option></select></div>
+    <div class="fg"><label>Artist origin</label><select id="s_origin"><option value="Local">Local (LA/SoCal)</option><option value="Touring">Touring</option></select></div>
+  </div>
+  <div class="fg"><label>Ticket / info URL</label><input type="url" id="s_url" placeholder="https://..."></div>
+  <div class="fg"><label>Details / notes</label><textarea id="s_notes" placeholder="Cover, lineup, guests..."></textarea></div>
+  <div class="mf3">
+    <button class="btn outline" onclick="cm('submitModal')">Cancel</button>
+    <button class="btn green" onclick="subShow()">&#9654; Submit for review</button>
+  </div>
+</div>
+</div>
+
+<!-- VENUE MODAL -->
+<div class="mbk" id="venueModal" style="display:none" onclick="cmo(event,'venueModal')">
+<div class="mo" onclick="event.stopPropagation()">
+  <button class="mc4" onclick="cm('venueModal')">&#10005;</button>
+  <h2>Venues</h2>
+  <div class="vl" id="venueList"></div>
+  <div class="avr">
+    <input type="text" id="nvn" placeholder="Venue name">
+    <input type="text" id="nvh" placeholder="Neighborhood">
+    <button class="btn green" onclick="addV()">+ Add</button>
+  </div>
+  <div class="mf3"><button class="btn green" onclick="cm('venueModal')">Done</button></div>
+</div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="mbk" id="detailModal" style="display:none" onclick="cmo(event,'detailModal')">
+<div class="mo" onclick="event.stopPropagation()" id="detailContent"></div>
+</div>
+
+<script>
+const API='';
+const UID='default';
+const TD=new Date();TD.setHours(0,0,0,0);
+const DN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+function ymd(d){return d.toISOString().split('T')[0];}
+function ad(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+
+const KV=[
+  {n:"Alex's Bar",a:"Long Beach",d:[2],t:"8 PM",no:"",pr:false,lb:false},
+  {n:"Artesia Bar",a:"South Bay",d:[0,2,4],t:"",no:"",pr:false,lb:false},
+  {n:"Backstage Bar & Grill",a:"Culver City",d:[4,5,6],t:"",no:"",pr:false,lb:false},
+  {n:"Bigfoot Lodge East",a:"Atwater Village",d:[1],t:"",no:"",pr:false,lb:false},
+  {n:"Bigfoot West",a:"Culver City",d:[1],t:"",no:"",pr:false,lb:false},
+  {n:"Blind Barber",a:"Highland Park",d:[3],t:"7pm",no:"",pr:false,lb:false},
+  {n:"Boardwalk 11",a:"Palms",d:[0,1,2,3,4,5,6],t:"",no:"Every night",pr:false,lb:false},
+  {n:"Brass Monkey",a:"Koreatown",d:[0,1,2,3,4,5,6],t:"",no:"Every night",pr:false,lb:false},
+  {n:"Cha Cha Lounge",a:"Silver Lake",d:[1],t:"",no:"2nd & 4th Mondays",pr:false,lb:false},
+  {n:"Chela's Sports Bar",a:"North Hollywood",d:[0,1,2,3,4,5,6],t:"",no:"Every night",pr:false,lb:false},
+  {n:"La Cuevita",a:"Highland Park",d:[0],t:"9pm",no:"",pr:false,lb:false},
+  {n:"Desert 5 Spot",a:"Hollywood",d:[3],t:"10pm",no:"",pr:false,lb:false},
+  {n:"The Dinghy Deli",a:"Redondo Beach",d:[5],t:"7pm",no:"",pr:false,lb:false},
+  {n:"Footsies",a:"Cypress Park",d:[1],t:"",no:"",pr:false,lb:false},
+  {n:"Foxfire Room",a:"Valley Village",d:[0,3],t:"",no:"",pr:false,lb:false},
+  {n:"Happy Rabbit Bar",a:"Van Nuys",d:[1,3,5,6,0],t:"8pm",no:"",pr:false,lb:false},
+  {n:"Harvelle's",a:"Santa Monica",d:[3],t:"",no:"Live band karaoke",pr:false,lb:true},
+  {n:"Highland Park Bowl",a:"Highland Park",d:[0],t:"",no:"",pr:false,lb:false},
+  {n:"Karaoke Bleu",a:"West LA",d:[0,1,2,3,4,5,6],t:"",no:"Every night",pr:false,lb:false},
+  {n:"Little Joy",a:"Echo Park",d:[2],t:"9 PM",no:"",pr:false,lb:false},
+  {n:"Lounge Ohja",a:"Little Tokyo",d:[0,1,2,3,4,5,6],t:"",no:"Every night",pr:false,lb:false},
+  {n:"Naughty Pig",a:"West Hollywood",d:[1,4,6],t:"",no:"",pr:false,lb:false},
+  {n:"Oaks Tavern",a:"Sherman Oaks",d:[0,1,2,3,4,5,6],t:"",no:"Every night",pr:false,lb:false},
+  {n:"Pat's Cocktail Lounge",a:"Valley Village",d:[2],t:"9 PM",no:"",pr:false,lb:false},
+  {n:"Pattaya Bay",a:"Los Feliz",d:[0,1,3,4,5,6],t:"",no:"",pr:false,lb:false},
+  {n:"Player One",a:"North Hollywood",d:[0,1,4,5],t:"",no:"",pr:false,lb:false},
+  {n:"Prime Time Pub",a:"Hollywood",d:[0,1,2,3,4,5,6],t:"",no:"Every night",pr:false,lb:false},
+  {n:"Prospector Saloon",a:"Long Beach",d:[3,5],t:"",no:"",pr:false,lb:false},
+  {n:"R Bar",a:"Koreatown",d:[0,4,6],t:"",no:"Sun brunch",pr:false,lb:false},
+  {n:"Red Lion Tavern",a:"Silver Lake",d:[4],t:"",no:"",pr:false,lb:false},
+  {n:"Robby's",a:"West Hollywood",d:[1,3,4,5,6,0],t:"9pm",no:"",pr:false,lb:false},
+  {n:"Rock N Pies",a:"Santa Monica",d:[6],t:"10pm",no:"",pr:false,lb:false},
+  {n:"Sagebrush Cantina",a:"Calabasas",d:[4],t:"7:30-10:30",no:"Live band",pr:false,lb:true},
+  {n:"Scarlet Lady Saloon",a:"Culver City",d:[2,4,5,6],t:"9pm",no:"",pr:false,lb:false},
+  {n:"Silverlake Lounge",a:"Silver Lake",d:[1],t:"",no:"",pr:false,lb:false},
+  {n:"The Barrel Tavern",a:"Sherman Oaks",d:[3,4],t:"",no:"",pr:false,lb:false},
+  {n:"The Blind Donkey",a:"Long Beach",d:[3],t:"",no:"",pr:false,lb:false},
+  {n:"The Fable",a:"Eagle Rock",d:[1,4],t:"",no:"",pr:false,lb:false},
+  {n:"The Falls Lounge",a:"DTLA",d:[0],t:"",no:"Kinky Karaoke",pr:false,lb:false},
+  {n:"The Gas Lite",a:"Santa Monica",d:[0,1,2,3,4,5,6],t:"",no:"Call ahead",pr:false,lb:false},
+  {n:"The Goodnite",a:"North Hollywood",d:[0,1,2,3,4,5,6],t:"",no:"Every night",pr:false,lb:false},
+  {n:"The High Low",a:"Atwater Village",d:[0,2,5,6],t:"",no:"",pr:false,lb:false},
+  {n:"The Offbeat",a:"Highland Park",d:[2],t:"",no:"2nd & 4th Tuesdays",pr:false,lb:false},
+  {n:"The Overlook",a:"Silver Lake",d:[2],t:"",no:"",pr:false,lb:false},
+  {n:"The Redwood",a:"DTLA",d:[1],t:"",no:"",pr:false,lb:false},
+  {n:"The Silver Fox",a:"Long Beach",d:[0,1,3],t:"",no:"Mon = Rehearsal Night",pr:false,lb:false},
+  {n:"The Venice Whaler",a:"Venice",d:[4],t:"9pm",no:"",pr:false,lb:false},
+  {n:"Tiki No",a:"North Hollywood",d:[0,3],t:"",no:"",pr:false,lb:false},
+  {n:"Tiki-Ti",a:"Los Feliz",d:[4],t:"",no:"First Thursday of month",pr:false,lb:false},
+  {n:"Tramp Stamp Granny's",a:"Hollywood",d:[4],t:"",no:"1x/month queer night",pr:false,lb:false},
+  {n:"Uncle Ollie's Penthouse",a:"DTLA",d:[3],t:"",no:"Gong Show Karaoke",pr:false,lb:false},
+  {n:"Video Vortex",a:"DTLA",d:[2],t:"",no:"at Alamo DTLA",pr:false,lb:false},
+  {n:"Ye Rustic Inn",a:"Los Feliz",d:[2],t:"",no:"",pr:false,lb:false},
+  {n:"Astro Karaoke",a:"South Bay",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+  {n:"Break Room 86",a:"Koreatown",d:[0,1,2,3,4,5,6],t:"",no:"Tue live band",pr:true,lb:true},
+  {n:"Carnival Karaoke",a:"Van Nuys",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+  {n:"Cash Box KTV",a:"Arcadia",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+  {n:"Feel Karaoke",a:"Koreatown",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+  {n:"Gaam Karaoke",a:"Koreatown",d:[0,1,2,3,4,5,6],t:"",no:"K-Pop karaoke",pr:true,lb:false},
+  {n:"Glow Lounge & Karaoke",a:"Koreatown",d:[0,1,2,3,4,5,6],t:"7PM-2AM",no:"",pr:true,lb:false},
+  {n:"Max Karaoke Studio",a:"Little Tokyo",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+  {n:"Pharaoh Karaoke",a:"Koreatown",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+  {n:"Recital Karaoke",a:"Koreatown",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+  {n:"Simple Karaoke",a:"Koreatown",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+  {n:"SoopSok Karaoke",a:"Koreatown",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+  {n:"XLanes",a:"Little Tokyo",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+  {n:"YD Karaoke Studio",a:"Koreatown",d:[0,1,2,3,4,5,6],t:"",no:"",pr:true,lb:false},
+];
+
+let shows=[],savedIds=new Set(),venueList=[],appLog=[],rejLog=[];
+let prefs={g:new Set(),t:new Set(),h:new Set(),o:new Set()};
+let af={type:[],genre:[],age:[],origin:[],hood:[]};
+let dp='all',cf='',ct='',curTab='browse';
+let skd=TD.getDay(),kff='all',kaf=[];
+
+const TO=["Band","DJ","Dance","Art","Karaoke"];
+const AO=["All ages","18+","21+"];
+const OO=["Local","Touring"];
+function gG(){return[...new Set(shows.filter(s=>s.status==='live').map(s=>s.genre))].sort();}
+function gH(){return[...new Set(shows.filter(s=>s.status==='live').map(s=>s.neighborhood).filter(Boolean))].sort();}
+function gA(){return[...new Set(KV.map(v=>v.a))].sort();}
+
+async function api(path,opts={}){
+  const res=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});
+  return res.json();
+}
+
+async function loadShows(){const live=await api('/api/shows');const pending=await api('/api/shows/pending');shows=[...live,...pending];baf();render();upd();}
+async function loadSaved(){const saved=await api(`/api/saved?user_id=${UID}`);savedIds=new Set(saved.map(s=>s.id));upd();}
+async function loadPrefs(){const p=await api(`/api/prefs?user_id=${UID}`);if(p.genres)prefs.g=new Set(p.genres);if(p.types)prefs.t=new Set(p.types);if(p.hoods)prefs.h=new Set(p.hoods);if(p.origins)prefs.o=new Set(p.origins);}
+async function loadVenues(){venueList=await api('/api/venues');}
+async function savePrefs(){await api('/api/prefs',{method:'POST',body:{user_id:UID,prefs:{genres:[...prefs.g],types:[...prefs.t],hoods:[...prefs.h],origins:[...prefs.o]}}});}
+
+function upd(){
+  const p=shows.filter(s=>s.status==='pending').length;
+  document.getElementById('modBadge').textContent=p;
+  document.getElementById('modBadge').style.display=p?'inline-flex':'none';
+  document.getElementById('savedBadge').textContent=savedIds.size;
+  document.getElementById('modBanner').style.display=p?'flex':'none';
+  document.getElementById('pendingCount').textContent=p;
+  document.getElementById('st-p').textContent=p;
+  document.getElementById('st-a').textContent=appLog.length;
+  document.getElementById('st-r').textContent=rejLog.length;
+}
+
+function gdr(){
+  const t=ymd(TD);
+  if(dp==='today')return[t,t];
+  if(dp==='tomorrow'){const d=ymd(ad(TD,1));return[d,d];}
+  if(dp==='week')return[t,ymd(ad(TD,6))];
+  if(dp==='weekend'){const dw=TD.getDay();const f=ad(TD,dw<=5?5-dw:6);return[ymd(f),ymd(ad(f,2))];}
+  if(dp==='month'){const e=new Date(TD.getFullYear(),TD.getMonth()+1,0);return[t,ymd(e)];}
+  if(dp==='all')return[t,'9999-12-31'];
+  if(dp==='custom')return[cf||t,ct||'9999-12-31'];
+  return[t,t];
+}
+function sdp(p){dp=p;document.querySelectorAll('.dc').forEach(c=>c.classList.remove('a'));const e=document.getElementById('dc-'+p);if(e)e.classList.add('a');document.getElementById('dateFrom').value='';document.getElementById('dateTo').value='';render();}
+function ocd(){cf=document.getElementById('dateFrom').value;ct=document.getElementById('dateTo').value;dp='custom';document.querySelectorAll('.dc').forEach(c=>c.classList.remove('a'));render();}
+function fd(d){const dt=new Date(d+'T12:00:00');const t=ymd(TD),tm=ymd(ad(TD,1));if(d===t)return'Tonight \u00b7 '+dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});if(d===tm)return'Tomorrow \u00b7 '+dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});return dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
+
+function bch(ci,fk,opts){const c=document.getElementById(ci);if(!c)return;c.innerHTML='';opts.forEach(o=>{const d=document.createElement('div');d.className='ch'+(af[fk].includes(o)?' a':'');d.textContent=o;d.onclick=()=>tf(fk,o);c.appendChild(d);});}
+function tf(k,v){const a=af[k];const i=a.indexOf(v);if(i>-1)a.splice(i,1);else a.push(v);baf();render();}
+function baf(){bch('typeFilters','type',TO);bch('genreFilters','genre',gG());bch('ageFilters','age',AO);bch('originFilters','origin',OO);bch('hoodFilters','hood',gH());}
+
+function bpc(ci,ps,opts){const c=document.getElementById(ci);if(!c)return;c.innerHTML='';opts.forEach(o=>{const d=document.createElement('div');d.className='pc'+(ps.has(o)?' on':'');d.innerHTML=(ps.has(o)?'&#10003; ':'')+o;d.onclick=()=>{if(ps.has(o))ps.delete(o);else ps.add(o);bps();rfy();savePrefs();};c.appendChild(d);});}
+function bps(){bpc('prefGenres',prefs.g,gG());bpc('prefTypes',prefs.t,TO);bpc('prefHoods',prefs.h,gH());bpc('prefOrigins',prefs.o,OO);}
+function clrP(){prefs={g:new Set(),t:new Set(),h:new Set(),o:new Set()};bps();rfy();savePrefs();}
+
+function sc(s){
+  if(s.status!=='live')return -1;const t=ymd(TD);if(s.date<t)return -1;
+  let x=0;if(!prefs.g.size&&!prefs.t.size&&!prefs.h.size&&!prefs.o.size)return -1;
+  if(prefs.g.size){const g=s.genre.toLowerCase();for(const p of prefs.g){if(g.includes(p.toLowerCase()))x+=40;}}
+  if(prefs.t.size&&prefs.t.has(s.type))x+=30;if(prefs.h.size&&prefs.h.has(s.neighborhood))x+=20;
+  if(prefs.o.size&&prefs.o.has(s.origin))x+=15;if(s.staff_pick)x+=10;
+  const days=(new Date(s.date+'T12:00:00')-TD)/86400000;x+=Math.max(0,20-days*2);return x;
+}
+function wr(s){
+  const r=[];
+  if(prefs.g.size){const g=s.genre.toLowerCase();for(const p of prefs.g){if(g.includes(p.toLowerCase()))r.push(s.genre+' match');}}
+  if(prefs.t.size&&prefs.t.has(s.type))r.push(s.type);if(prefs.h.size&&prefs.h.has(s.neighborhood))r.push(s.neighborhood);
+  if(prefs.o.size&&prefs.o.has(s.origin))r.push(s.origin.toLowerCase()+' artist');if(s.staff_pick)r.push('staff pick');
+  return r.slice(0,3).join(' / ');
+}
+
+function crd(s,ss){
+  const sv=savedIds.has(s.id);const w=ss?wr(s):'';const tm=s.time||'TBA';
+  return`<div class="sc${s.staff_pick?' sp':''}"><div class="sc-bar"></div><div class="ch2"><div class="cd">${fd(s.date)} &middot; ${tm}</div><div class="ct">${s.artist}</div><div class="cv">${s.venue}${s.neighborhood?' &middot; '+s.neighborhood:''}</div></div><div class="cb">${ss&&w?`<div class="ry">&#9733; ${w}</div>`:''}<div class="tags"><span class="tag ttype">${s.type}</span><span class="tag tgenre">${s.genre}</span><span class="tag tage">${s.age}</span><span class="tag ${s.origin==='Local'?'tlocal':'ttour'}">${s.origin}</span>${s.neighborhood?`<span class="tag thood">${s.neighborhood}</span>`:''} ${s.staff_pick?'<span class="tag tsp">&#9733; Staff pick</span>':''}${sv?'<span class="tag tsaved">&#9830; Saved</span>':''}</div>${s.notes?`<div class="cn">${s.notes}</div>`:''}<div class="ca"><button class="btn sm outline" onclick="ts(${s.id})">${sv?'&#9830;':'&#9826;'}</button><button class="btn sm outline" onclick="od(${s.id})">&#9432; Info</button>${s.url&&s.url!=='#'&&s.url!==''?`<a href="${s.url}" class="btn sm green" style="text-decoration:none" target="_blank">&#9654; Tix</a>`:''}</div></div></div>`;
+}
+
+function matchF(s){
+  if(s.status!=='live')return false;const[fr,to]=gdr();if(s.date<fr||s.date>to)return false;
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  if(q&&!s.artist.toLowerCase().includes(q)&&!(s.venue||'').toLowerCase().includes(q)&&!(s.neighborhood||'').toLowerCase().includes(q)&&!(s.genre||'').toLowerCase().includes(q))return false;
+  if(document.getElementById('recOnly').checked&&!s.staff_pick)return false;
+  if(af.type.length&&!af.type.includes(s.type))return false;if(af.genre.length&&!af.genre.some(g=>s.genre.includes(g)))return false;
+  if(af.age.length&&!af.age.includes(s.age))return false;if(af.origin.length&&!af.origin.includes(s.origin))return false;
+  if(af.hood.length&&!af.hood.includes(s.neighborhood))return false;return true;
+}
+function render(){
+  const f=shows.filter(matchF).sort((a,b)=>a.date.localeCompare(b.date));
+  const g=document.getElementById('showsGrid'),e=document.getElementById('emptyState');
+  const lb={today:'tonight',tomorrow:'tomorrow',weekend:'this weekend',week:'this week',month:'this month',all:'upcoming',custom:'in range'};
+  document.getElementById('rc').textContent=f.length+' show'+(f.length!==1?'s':'')+' '+(lb[dp]||'upcoming');
+  if(!f.length){g.style.display='none';e.style.display='block';return;}
+  g.style.display='grid';e.style.display='none';g.innerHTML=f.map(s=>crd(s,false)).join('');
+}
+function rfy(){
+  const no=!prefs.g.size&&!prefs.t.size&&!prefs.h.size&&!prefs.o.size;
+  const fg=document.getElementById('fyGrid'),fe=document.getElementById('fyEmpty');
+  if(no){fg.style.display='none';fe.style.display='block';document.getElementById('fyc').textContent='';return;}
+  const sc2=shows.map(s=>({s,score:sc(s)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+  document.getElementById('fyc').textContent=sc2.length+' match'+(sc2.length!==1?'es':'');
+  if(!sc2.length){fg.style.display='none';fe.style.display='block';return;}
+  fg.style.display='block';fe.style.display='none';fg.innerHTML='<div class="grid">'+sc2.map(({s})=>crd(s,true)).join('')+'</div>';
+}
+function rs(){
+  const sv=shows.filter(s=>savedIds.has(s.id));
+  const g=document.getElementById('savedGrid'),e=document.getElementById('savedEmpty');
+  if(!sv.length){g.style.display='none';e.style.display='block';return;}
+  g.style.display='grid';e.style.display='none';g.innerHTML=sv.map(s=>crd(s,false)).join('');
+}
+async function ts(id){
+  if(savedIds.has(id)){savedIds.delete(id);await api(`/api/saved/${id}?user_id=${UID}`,{method:'DELETE'});}
+  else{savedIds.add(id);await api(`/api/saved/${id}`,{method:'POST',body:{user_id:UID}});}
+  upd();render();rfy();rs();
+}
+
+function bds(){
+  const st=document.getElementById('dayStrip');st.innerHTML='';
+  for(let i=0;i<7;i++){const off=(i-TD.getDay()+7)%7;const date=ad(TD,off);const lb=i===TD.getDay()?'Tonight':DN[i].substring(0,3)+' '+date.toLocaleDateString('en-US',{month:'short',day:'numeric'});const b=document.createElement('div');b.className='db'+(i===skd?' a':'');b.textContent=lb;b.onclick=(function(di){return function(){skd=di;bds();rk();};})(i);st.appendChild(b);}
+}
+function bkf(){
+  const fc=document.getElementById('karFmt');fc.innerHTML='';
+  [['all','All'],['open','Open bar'],['private','Private room'],['liveband','Live band']].forEach(function(pair){const d=document.createElement('div');d.className='ch'+(kff===pair[0]?' a':'');d.textContent=pair[1];d.onclick=function(){kff=pair[0];bkf();rk();};fc.appendChild(d);});
+  const ac=document.getElementById('karArea');ac.innerHTML='';
+  gA().forEach(function(area){const d=document.createElement('div');d.className='ch'+(kaf.includes(area)?' a':'');d.textContent=area;d.onclick=function(){const i=kaf.indexOf(area);if(i>-1)kaf.splice(i,1);else kaf.push(area);bkf();rk();};ac.appendChild(d);});
+}
+function rk(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const f=KV.filter(function(v){if(!v.d.includes(skd))return false;if(kff==='open'&&v.pr)return false;if(kff==='private'&&!v.pr)return false;if(kff==='liveband'&&!v.lb)return false;if(kaf.length&&!kaf.includes(v.a))return false;if(q&&!v.n.toLowerCase().includes(q)&&!v.a.toLowerCase().includes(q))return false;return true;});
+  const g=document.getElementById('karGrid'),e=document.getElementById('karEmpty');
+  const dl=skd===TD.getDay()?'tonight':DN[skd];
+  document.getElementById('kc').textContent=f.length+' karaoke night'+(f.length!==1?'s':'')+' '+dl;
+  if(!f.length){g.style.display='none';e.style.display='block';return;}
+  g.style.display='grid';e.style.display='none';
+  g.innerHTML=f.map(function(v){return'<div class="sc"><div class="sc-bar"></div><div class="ch2"><div class="cd">'+DN[skd]+(v.t?' &middot; '+v.t:'')+'</div><div class="ct">'+v.n+'</div><div class="cv">'+v.a+'</div></div><div class="cb"><div class="tags"><span class="tag tkar">&#9834; Karaoke</span>'+(v.pr?'<span class="tag thood">Private room</span>':'<span class="tag tgenre">Open bar</span>')+(v.lb?'<span class="tag tlocal">Live band</span>':'')+'</div>'+(v.no?'<div class="cn">'+v.no+'</div>':'')+'</div></div>';}).join('');
+}
+
+function renderMod(){
+  upd();
+  const p=shows.filter(s=>s.status==='pending');
+  const q=document.getElementById('modQ');
+  if(!p.length){q.innerHTML='<div class="me">&#10003; Queue is clear — all submissions reviewed</div>';return;}
+  q.innerHTML=p.map(s=>`<div class="mc3">
+    <div class="mch">
+      <div><div class="mct">${s.artist}</div><div class="mcs">${fd(s.date)} &middot; ${s.time||'TBA'} &middot; ${s.venue}</div></div>
+      <div class="tags"><span class="tag tpend">Pending</span></div>
+    </div>
+    <div class="mfi">
+      <div><strong>Type:</strong> ${s.type}</div><div><strong>Genre:</strong> ${s.genre}</div>
+      <div><strong>Age:</strong> ${s.age}</div><div><strong>Origin:</strong> ${s.origin}</div>
+      <div><strong>Hood:</strong> ${s.neighborhood||'—'}</div>
+      ${s.url?`<div><strong>URL:</strong> <a href="${s.url}" target="_blank" style="color:#30D158;font-size:11px">${s.url.substring(0,30)}</a></div>`:''}
+    </div>
+    ${s.notes?`<div style="font-size:12px;color:#666;padding:6px 9px;background:#000;border-radius:6px;margin-bottom:8px">${s.notes}</div>`:''}
+    <div class="ma">
+      <button class="btn sm approve" onclick="appr(${s.id})">&#10003; Approve</button>
+      <button class="btn sm staffpick" onclick="appr(${s.id},true)">&#9733; + Staff pick</button>
+      <button class="btn sm reject" onclick="rej(${s.id})">&#10005; Reject</button>
+      <button class="btn sm outline" onclick="editShow(${s.id})">&#9998; Edit</button>
+      <button class="btn sm danger" onclick="delShow(${s.id})">&#128465; Delete</button>
+    </div>
+  </div>`).join('');
+
+  // Live shows section for master delete
+  const live=shows.filter(s=>s.status==='live').sort((a,b)=>a.date.localeCompare(b.date));
+  const liveEl=document.getElementById('liveModList');
+  if(liveEl){
+    liveEl.innerHTML=live.map(s=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:10px">
+        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:#fff">${s.artist}</div><div style="font-size:11px;color:#666">${fd(s.date)} &middot; ${s.venue}</div></div>
+        <div style="display:flex;gap:5px;align-items:center">
+          ${s.staff_pick?'<span class="tag tsp" style="font-size:10px">&#9733;</span>':''}
+          <button class="btn sm danger" onclick="delShow(${s.id})">&#128465; Delete</button>
+        </div>
+      </div>`).join('');
+  }
+
+  const al=document.getElementById('appList');
+  if(!appLog.length){al.innerHTML='<div style="font-size:12px;color:#444">Nothing approved yet this session</div>';return;}
+  al.innerHTML=appLog.slice().reverse().map(s=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;gap:8px">
+      <span style="color:#e0e0e0;flex:1;font-weight:500">${s.artist}</span>
+      <span style="color:#666">${s.venue} &middot; ${fd(s.date)}</span>
+      ${s.staff_pick?'<span class="tag tsp" style="margin:0;font-size:10px">&#9733; Pick</span>':'<span></span>'}
+    </div>`).join('');
+}
+
+async function appr(id,sp=false){
+  await api(`/api/shows/${id}/approve`,{method:'PATCH',body:{staff_pick:sp}});
+  const s=shows.find(x=>x.id===id);if(s){s.status='live';if(sp)s.staff_pick=1;appLog.push({...s});}
+  baf();render();renderMod();
+}
+async function rej(id){
+  await api(`/api/shows/${id}/reject`,{method:'PATCH'});
+  const s=shows.find(x=>x.id===id);if(s){rejLog.push({...s});shows=shows.filter(x=>x.id!==id);}
+  renderMod();upd();
+}
+async function delShow(id){
+  if(!confirm('Permanently delete this show?'))return;
+  await api(`/api/shows/${id}`,{method:'DELETE'});
+  shows=shows.filter(x=>x.id!==id);
+  baf();render();renderMod();upd();
+}
+function editShow(id){
+  const s=shows.find(x=>x.id===id);if(!s)return;
+  populateVenueSelect(s.venue);
+  document.getElementById('s_artist').value=s.artist;document.getElementById('s_date').value=s.date;
+  document.getElementById('s_time').value=s.time||'';document.getElementById('s_type').value=s.type;
+  document.getElementById('s_genre').value=s.genre;document.getElementById('s_age').value=s.age;
+  document.getElementById('s_origin').value=s.origin;document.getElementById('s_url').value=s.url||'';
+  document.getElementById('s_notes').value=s.notes||'';
+  shows=shows.filter(x=>x.id!==id);document.getElementById('submitModal').style.display='flex';
+}
+
+function od(id){
+  const s=shows.find(x=>x.id===id);if(!s)return;const sv=savedIds.has(s.id);
+  document.getElementById('detailContent').innerHTML=
+    '<button class="mc4" onclick="cm(\'detailModal\')">&#10005;</button>'+
+    '<h2>'+s.artist+'</h2>'+
+    '<p style="font-size:12px;color:#888;margin-bottom:1rem">'+fd(s.date)+' &middot; '+(s.time||'TBA')+' &middot; '+s.venue+(s.neighborhood?' &middot; '+s.neighborhood:'')+'</p>'+
+    '<div class="tags" style="margin-bottom:1rem"><span class="tag ttype">'+s.type+'</span><span class="tag tgenre">'+s.genre+'</span><span class="tag tage">'+s.age+'</span><span class="tag '+(s.origin==='Local'?'tlocal':'ttour')+'">'+s.origin+'</span>'+(s.staff_pick?'<span class="tag tsp">&#9733; Staff pick</span>':'')+'</div>'+
+    (s.notes?'<p style="font-size:13px;color:#888;margin-bottom:1rem;line-height:1.5;background:#000;padding:10px;border-radius:8px">'+s.notes+'</p>':'')+
+    '<div class="mf3"><button class="btn outline" onclick="ts('+s.id+');cm(\'detailModal\')">'+(sv?'&#9830; Unsave':'&#9826; Save')+'</button>'+(s.url&&s.url!=='#'&&s.url!==''?'<a href="'+s.url+'" class="btn green" style="text-decoration:none" target="_blank">&#9654; Tickets</a>':'')+'<button class="btn outline" onclick="cm(\'detailModal\')">Close</button></div>';
+  document.getElementById('detailModal').style.display='flex';
+}
+
+function populateVenueSelect(selected){document.getElementById('s_venue').innerHTML=venueList.map(v=>`<option value="${v.name}"${v.name===selected?' selected':''}>${v.name}${v.neighborhood?' ('+v.neighborhood+')':''}</option>`).join('');}
+function openSubmit(){populateVenueSelect();document.getElementById('submitModal').style.display='flex';}
+async function subShow(){
+  const artist=document.getElementById('s_artist').value.trim();const date=document.getElementById('s_date').value;const venue=document.getElementById('s_venue').value;const type=document.getElementById('s_type').value;
+  if(!artist||!date||!type){alert('Please fill in required fields.');return;}
+  const result=await api('/api/shows',{method:'POST',body:{artist,date,venue,type,time:document.getElementById('s_time').value||'TBA',genre:document.getElementById('s_genre').value||'TBA',age:document.getElementById('s_age').value,origin:document.getElementById('s_origin').value,url:document.getElementById('s_url').value||'',notes:document.getElementById('s_notes').value}});
+  shows.push({id:result.id,artist,date,venue,type,time:document.getElementById('s_time').value||'TBA',genre:document.getElementById('s_genre').value||'TBA',age:document.getElementById('s_age').value,origin:document.getElementById('s_origin').value,neighborhood:(venueList.find(v=>v.name===venue)||{}).neighborhood||'',staff_pick:0,url:document.getElementById('s_url').value||'',notes:document.getElementById('s_notes').value,status:'pending'});
+  cm('submitModal');upd();render();['s_artist','s_date','s_time','s_genre','s_url','s_notes'].forEach(id=>document.getElementById(id).value='');
+}
+async function openVenues(){
+  await loadVenues();
+  document.getElementById('venueList').innerHTML=venueList.map(v=>`<div class="vp">${v.name}${v.neighborhood?' &middot; '+v.neighborhood:''}<button onclick="rmV(${v.id})">&#10005;</button></div>`).join('');
+  document.getElementById('venueModal').style.display='flex';
+}
+async function addV(){
+  const n=document.getElementById('nvn').value.trim();const h=document.getElementById('nvh').value.trim();if(!n)return;
+  await api('/api/venues',{method:'POST',body:{name:n,neighborhood:h||'Los Angeles'}});
+  await loadVenues();document.getElementById('nvn').value='';document.getElementById('nvh').value='';
+  document.getElementById('venueList').innerHTML=venueList.map(v=>`<div class="vp">${v.name}${v.neighborhood?' &middot; '+v.neighborhood:''}<button onclick="rmV(${v.id})">&#10005;</button></div>`).join('');
+}
+async function rmV(id){
+  await api(`/api/venues/${id}`,{method:'DELETE'});await loadVenues();
+  document.getElementById('venueList').innerHTML=venueList.map(v=>`<div class="vp">${v.name}${v.neighborhood?' &middot; '+v.neighborhood:''}<button onclick="rmV(${v.id})">&#10005;</button></div>`).join('');
+}
+
+function onSearch(){if(curTab==='browse')render();else if(curTab==='karaoke')rk();else if(curTab==='foryou')rfy();}
+function sw(tab){
+  curTab=tab;
+  ['browse','foryou','karaoke','saved','mod'].forEach(t=>{document.getElementById('pane-'+t).style.display=t===tab?'block':'none';document.getElementById('tab-'+t).classList.toggle('a',t===tab);});
+  if(tab==='foryou'){bps();rfy();}if(tab==='karaoke'){bds();bkf();rk();}if(tab==='saved')rs();if(tab==='mod')renderMod();
+}
+function cm(id){document.getElementById(id).style.display='none';}
+function cmo(e,id){if(e.target.id===id)cm(id);}
+
+async function init(){await Promise.all([loadShows(),loadSaved(),loadPrefs(),loadVenues()]);baf();render();upd();}
+init();
+</script>
+
+<!-- LIVE SHOWS MASTER LIST (in mod tab) -->
+<script>
+// Inject live shows manager into mod pane after DOM loads
+document.addEventListener('DOMContentLoaded',function(){
+  const modPane=document.getElementById('pane-mod');
+  const liveSection=document.createElement('div');
+  liveSection.style.cssText='margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1rem';
+  liveSection.innerHTML='<div style="font-size:11px;color:#666;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">&#9656; All live shows (master)</div><div id="liveModList"></div>';
+  modPane.appendChild(liveSection);
+});
+</script>
+</body>
+</html>
