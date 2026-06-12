@@ -401,6 +401,118 @@ function parseDate(raw) {
   return null;
 }
 
+// Permanent Records Roadhouse scraper
+async function scrapePermanentRoadhouse() {
+  console.log('Scraping Permanent Records Roadhouse...');
+  try {
+    const { data } = await axios.get('http://roadhouse.permanentrecordsla.com/', {
+      timeout: 10000,
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' }
+    });
+    const $ = cheerio.load(data);
+    const shows = [];
+    const currentYear = new Date().getFullYear();
+
+    // Their site lists events as plain text blocks with dates like "Friday, June 13th - 9PM Artist Name"
+    $('body').find('p, div, li, td').each((i, el) => {
+      const text = $(el).text().replace(/\s+/g, ' ').trim();
+      // Match patterns like "Friday, June 13th" or "Saturday, June 14th - 8PM"
+      const dateMatch = text.match(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?/i);
+      if (!dateMatch) return;
+
+      const month = dateMatch[1];
+      const day = parseInt(dateMatch[2]);
+      const timeMatch = text.match(/[-–]\s*(\d{1,2}(?::\d{2})?(?:AM|PM)?)/i);
+      const time = timeMatch ? timeMatch[1] : 'TBA';
+
+      // Extract artist name — text after the time or date
+      let artist = text.replace(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+[A-Za-z]+\s+\d{1,2}(?:st|nd|rd|th)?/i, '').replace(/[-–]\s*\d{1,2}(?::\d{2})?(?:AM|PM)?/i, '').trim();
+      artist = artist.replace(/Buy tickets?!?/i, '').replace(/FREE RSVP/i, '').trim();
+
+      const url = $(el).find('a').first().attr('href') || 'http://roadhouse.permanentrecordsla.com';
+
+      if (artist && artist.length > 2 && artist.length < 150) {
+        shows.push({
+          artist,
+          raw_date: `${month} ${day} ${currentYear}`,
+          time,
+          venue: 'Permanent Records Roadhouse',
+          neighborhood: 'Echo Park',
+          url: url.startsWith('http') ? url : 'http://roadhouse.permanentrecordsla.com' + url,
+          notes: ''
+        });
+      }
+    });
+
+    return shows.slice(0, 30);
+  } catch (err) {
+    console.error(`Failed to scrape Permanent Records Roadhouse: ${err.message}`);
+    return [];
+  }
+}
+
+// KCRW concert calendar scraper
+async function scrapeKCRW() {
+  console.log('Scraping KCRW...');
+  try {
+    const { data } = await axios.get('https://www.kcrw.com/events', {
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      }
+    });
+    const $ = cheerio.load(data);
+    const shows = [];
+
+    // Try JSON-LD first
+    $('script[type="application/ld+json"]').each((i, el) => {
+      try {
+        const json = JSON.parse($(el).html());
+        const events = Array.isArray(json) ? json : (json['@graph'] || json.event || [json]);
+        events.forEach(e => {
+          if (e['@type'] === 'MusicEvent' || e['@type'] === 'Event') {
+            const name = e.name;
+            const startDate = e.startDate;
+            const venue = e.location ? (e.location.name || 'TBA') : 'TBA';
+            const neighborhood = 'Los Angeles';
+            const url = e.url || 'https://www.kcrw.com/events';
+            if (name && startDate) {
+              shows.push({ artist: name, raw_date: startDate, venue, neighborhood, url, notes: 'KCRW Presents' });
+            }
+          }
+        });
+      } catch (e) {}
+    });
+
+    // Fallback: parse event listings
+    if (shows.length === 0) {
+      $('[class*="event"], article, .card').each((i, el) => {
+        const title = $(el).find('h1,h2,h3,h4,[class*="title"],[class*="name"]').first().text().trim();
+        const dateEl = $(el).find('time,[class*="date"]').first();
+        const dateStr = dateEl.attr('datetime') || dateEl.text().trim();
+        const venueName = $(el).find('[class*="venue"],[class*="location"]').first().text().trim() || 'Los Angeles';
+        const url = $(el).find('a').first().attr('href') || 'https://www.kcrw.com/events';
+        if (title && title.length > 2 && title.length < 120) {
+          shows.push({
+            artist: title,
+            raw_date: dateStr,
+            venue: venueName,
+            neighborhood: 'Los Angeles',
+            url: url.startsWith('http') ? url : 'https://www.kcrw.com' + url,
+            notes: 'KCRW Presents'
+          });
+        }
+      });
+    }
+
+    return shows.slice(0, 30);
+  } catch (err) {
+    console.error(`Failed to scrape KCRW: ${err.message}`);
+    return [];
+  }
+}
+
 async function runScraper() {
   console.log('Running scrapers...');
   const today = new Date().toISOString().split('T')[0];
@@ -438,6 +550,12 @@ async function runScraper() {
 
   const lodgeShows = await scrapeLodgeRoom();
   allShows.push(...lodgeShows);
+
+  const roadhouseShows = await scrapePermanentRoadhouse();
+  allShows.push(...roadhouseShows);
+
+  const kcrwShows = await scrapeKCRW();
+  allShows.push(...kcrwShows);
 
   const added = insertAll(allShows);
   console.log(`Scrape complete. Added ${added} new shows from ${allShows.length} total found.`);
