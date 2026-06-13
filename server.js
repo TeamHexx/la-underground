@@ -415,8 +415,7 @@ async function scrapePermanentRoadhouse() {
 
     // Their site lists events as plain text blocks with dates like "Friday, June 13th - 9PM Artist Name"
     $('body').find('p, div, li, td').each((i, el) => {
-      const text = $(el).text().replace(/\s+/g, ' ').trim();
-      // Match patterns like "Friday, June 13th" or "Saturday, June 14th - 8PM"
+        const text = $(el).text().replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\s+/g, ' ').trim();      // Match patterns like "Friday, June 13th" or "Saturday, June 14th - 8PM"
       const dateMatch = text.match(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?/i);
       if (!dateMatch) return;
 
@@ -427,8 +426,7 @@ async function scrapePermanentRoadhouse() {
 
       // Extract artist name — text after the time or date
       let artist = text.replace(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+[A-Za-z]+\s+\d{1,2}(?:st|nd|rd|th)?/i, '').replace(/[-–]\s*\d{1,2}(?::\d{2})?(?:AM|PM)?/i, '').trim();
-      artist = artist.replace(/Buy tickets?!?/i, '').replace(/FREE RSVP/i, '').trim();
-
+        artist = artist.replace(/Buy tickets?!?/i, ' ').replace(/FREE RSVP/i, ' ').replace(/\s+/g, ' ').trim();
       const url = $(el).find('a').first().attr('href') || 'http://roadhouse.permanentrecordsla.com';
 
       if (artist && artist.length > 2 && artist.length < 150) {
@@ -455,59 +453,58 @@ async function scrapePermanentRoadhouse() {
 async function scrapeKCRW() {
   console.log('Scraping KCRW...');
   try {
-    // Use the music page which has a cleaner concert listing
-    const { data } = await axios.get('https://www.kcrw.com/music', {
+    const { data } = await axios.get('https://www.kcrw.com/events', {
       timeout: 15000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Cache-Control': 'no-cache',
       }
     });
     const $ = cheerio.load(data);
     const shows = [];
-    const currentYear = new Date().getFullYear();
 
-    // KCRW music page lists concerts in a section with date + title + venue
-    $('li, article, .event-item, [class*="concert"]').each((i, el) => {
-      const text = $(el).text().replace(/\s+/g, ' ').trim();
-
-      // Match "Jun 19" or "Jul 22" date pattern
-      const dateMatch = text.match(/([A-Za-z]{3})\s+(\d{1,2})/);
-      if (!dateMatch) return;
-
-      const month = dateMatch[1];
-      const day = dateMatch[2];
-
-      // Title is in bold/heading
-      const title = $(el).find('strong, b, h2, h3, h4, a').first().text().trim();
-      if (!title || title.length < 3 || title.length > 150) return;
-
-      // Skip non-music events
-      const lowerText = text.toLowerCase();
-      const isMusic = lowerText.includes('kcrw presents') || lowerText.includes('concert') || lowerText.includes('indie') || lowerText.includes('alt') || lowerText.includes('electronic') || lowerText.includes('shoegaze') || lowerText.includes('hip-hop');
-      if (!isMusic) return;
-
-      // Extract venue
-      const venueMatch = text.match(/·\s*([^·]+),\s*Los Angeles/);
-      const venue = venueMatch ? venueMatch[1].trim() : 'Los Angeles';
-
-      const url = $(el).find('a').first().attr('href') || 'https://www.kcrw.com/music';
-
-      shows.push({
-        artist: title,
-        raw_date: `${month} ${day} ${currentYear}`,
-        venue,
-        neighborhood: 'Los Angeles',
-        url: url.startsWith('http') ? url : 'https://www.kcrw.com' + url,
-        notes: 'KCRW Presents',
-        staff_pick: 1
-      });
+    // Try JSON-LD first
+    $('script[type="application/ld+json"]').each((i, el) => {
+      try {
+        const json = JSON.parse($(el).html());
+        const events = Array.isArray(json) ? json : (json['@graph'] || json.event || [json]);
+        events.forEach(e => {
+          if (e['@type'] === 'MusicEvent' || e['@type'] === 'Event') {
+            const name = e.name;
+            const startDate = e.startDate;
+            const venue = e.location ? (e.location.name || 'TBA') : 'TBA';
+            const neighborhood = 'Los Angeles';
+            const url = e.url || 'https://www.kcrw.com/events';
+            if (name && startDate) {
+              shows.push({ artist: name, raw_date: startDate, venue, neighborhood, url, notes: 'KCRW Presents' });
+            }
+          }
+        });
+      } catch (e) {}
     });
 
-    console.log(`KCRW: found ${shows.length} shows`);
-    return shows.slice(0, 40);
+    // Fallback: parse event listings
+    if (shows.length === 0) {
+      $('[class*="event"], article, .card').each((i, el) => {
+        const title = $(el).find('h1,h2,h3,h4,[class*="title"],[class*="name"]').first().text().trim();
+        const dateEl = $(el).find('time,[class*="date"]').first();
+        const dateStr = dateEl.attr('datetime') || dateEl.text().trim();
+        const venueName = $(el).find('[class*="venue"],[class*="location"]').first().text().trim() || 'Los Angeles';
+        const url = $(el).find('a').first().attr('href') || 'https://www.kcrw.com/events';
+        if (title && title.length > 2 && title.length < 120) {
+          shows.push({
+            artist: title,
+            raw_date: dateStr,
+            venue: venueName,
+            neighborhood: 'Los Angeles',
+            url: url.startsWith('http') ? url : 'https://www.kcrw.com' + url,
+            notes: 'KCRW Presents'
+          });
+        }
+      });
+    }
+
+    return shows.slice(0, 30);
   } catch (err) {
     console.error(`Failed to scrape KCRW: ${err.message}`);
     return [];
@@ -519,8 +516,8 @@ async function runScraper() {
   const today = new Date().toISOString().split('T')[0];
 
   const insertShow = db.prepare(`
-    INSERT OR IGNORE INTO shows (artist, date, time, venue, neighborhood, url, notes, status, source, type, genre, age, origin, staff_pick)
-    VALUES (?, ?, 'TBA', ?, ?, ?, ?, 'live', 'scraped', 'Band', 'TBA', 'All ages', 'TBA', ?)
+    INSERT OR IGNORE INTO shows (artist, date, time, venue, neighborhood, url, notes, status, source, type, genre, age, origin)
+    VALUES (?, ?, 'TBA', ?, ?, ?, ?, 'live', 'scraped', 'Band', 'TBA', 'All ages', 'TBA')
   `);
 
   const insertAll = db.transaction((shows) => {
@@ -529,7 +526,7 @@ async function runScraper() {
       const date = parseDate(s.raw_date);
       if (!date || date < today) continue;
       try {
-        const result = insertShow.run(s.artist, date, s.venue, s.neighborhood, s.url, s.notes || '', s.staff_pick || 0);
+        const result = insertShow.run(s.artist, date, s.venue, s.neighborhood, s.url, s.notes || '');
         if (result.changes > 0) count++;
       } catch (e) { /* duplicate, skip */ }
     }
@@ -554,8 +551,6 @@ async function runScraper() {
 
   const roadhouseShows = await scrapePermanentRoadhouse();
   allShows.push(...roadhouseShows);
-
-  await new Promise(r => setTimeout(r, 3000)); // wait 3s before hitting KCRW
 
   const kcrwShows = await scrapeKCRW();
   allShows.push(...kcrwShows);
