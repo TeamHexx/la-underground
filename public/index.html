@@ -197,14 +197,14 @@ body{background:var(--bg);color:#e0e0e0;font-family:var(--font);min-height:100vh
 <!-- BROWSE -->
 <div id="pane-browse">
   <div class="ds">
-    <div class="dc a" id="dc-today" onclick="sdp('today')">Tonight</div>
+    <div class="dc" id="dc-today" onclick="sdp('today')">Tonight</div>
     <div class="dc" id="dc-tomorrow" onclick="sdp('tomorrow')">Tomorrow</div>
     <div class="dc" id="dc-week" onclick="sdp('week')">This week</div>
     <div class="dc" id="dc-weekend" onclick="sdp('weekend')">Weekend</div>
     <div class="dc" id="dc-month" onclick="sdp('month')">Month</div>
-    <div class="dc" id="dc-all" onclick="sdp('all')">All upcoming</div>
-    <div class="diw"><label>From</label><input type="date" id="dateFrom" oninput="ocd()"></div>
-    <div class="diw"><label>To</label><input type="date" id="dateTo" oninput="ocd()"></div>
+    <div class="dc a" id="dc-all" onclick="sdp('all')">All upcoming</div>
+    <div class="diw"><label>From</label><input type="date" id="dateFrom" onchange="ocd()"></div>
+    <div class="diw"><label>To</label><input type="date" id="dateTo" onchange="ocd()"></div>
   </div>
   <div class="fr">
     <span class="fl">Type</span><div class="fgroup" id="typeFilters"></div>
@@ -411,7 +411,7 @@ const KV=[
 let shows=[],savedIds=new Set(),venueList=[],appLog=[],rejLog=[];
 let prefs={g:new Set(),t:new Set(),h:new Set(),o:new Set()};
 let af={type:[],genre:[],age:[],origin:[],hood:[]};
-let dp='today',cf='',ct='',curTab='browse';
+let dp='all',cf='',ct='',curTab='browse';
 let skd=TD.getDay(),kff='all',kaf=[];
 
 const TO=["Band","DJ","Dance","Art","Karaoke"];
@@ -426,7 +426,7 @@ async function api(path,opts={}){
   return res.json();
 }
 
-async function loadShows(){const live=await api('/api/shows');const pending=await api('/api/shows/pending');shows=[...live,...pending];}
+async function loadShows(){const live=await api('/api/shows');const pending=await api('/api/shows/pending');shows=[...live,...pending];baf();render();upd();}
 async function loadSaved(){const saved=await api(`/api/saved?user_id=${UID}`);savedIds=new Set(saved.map(s=>s.id));upd();}
 async function loadPrefs(){const p=await api(`/api/prefs?user_id=${UID}`);if(p.genres)prefs.g=new Set(p.genres);if(p.types)prefs.t=new Set(p.types);if(p.hoods)prefs.h=new Set(p.hoods);if(p.origins)prefs.o=new Set(p.origins);}
 async function loadVenues(){venueList=await api('/api/venues');}
@@ -579,9 +579,10 @@ function renderMod(){
   if(liveEl){
     liveEl.innerHTML=live.map(s=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:10px">
-        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:#fff">${s.artist}</div><div style="font-size:11px;color:#666">${fd(s.date)} &middot; ${s.venue}</div></div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:#fff">${s.artist}</div><div style="font-size:11px;color:#666">${fd(s.date)} &middot; ${s.venue} &middot; <span style="color:#30D158">${s.type}</span></div></div>
         <div style="display:flex;gap:5px;align-items:center">
           ${s.staff_pick?'<span class="tag tsp" style="font-size:10px">&#9733;</span>':''}
+          <button class="btn sm outline" onclick="editLiveShow(${s.id})">&#9998; Edit</button>
           <button class="btn sm danger" onclick="delShow(${s.id})">&#128465; Delete</button>
         </div>
       </div>`).join('');
@@ -622,6 +623,63 @@ function editShow(id){
   document.getElementById('s_origin').value=s.origin;document.getElementById('s_url').value=s.url||'';
   document.getElementById('s_notes').value=s.notes||'';
   shows=shows.filter(x=>x.id!==id);document.getElementById('submitModal').style.display='flex';
+}
+
+function editLiveShow(id){
+  const s=shows.find(x=>x.id===id);if(!s)return;
+  // Build inline edit modal
+  document.getElementById('detailContent').innerHTML=
+    '<button class="mc4" onclick="cm(\'detailModal\')">&#10005;</button>'+
+    '<h2>Edit Show</h2>'+
+    '<div class="fg"><label>Artist / Event</label><input type="text" id="el_artist" value="'+s.artist+'"></div>'+
+    '<div class="frow">'+
+      '<div class="fg"><label>Date</label><input type="date" id="el_date" value="'+s.date+'"></div>'+
+      '<div class="fg"><label>Time</label><input type="time" id="el_time" value="'+(s.time||'')+'"></div>'+
+    '</div>'+
+    '<div class="frow">'+
+      '<div class="fg"><label>Type</label><select id="el_type">'+
+        ['Band','DJ','Dance','Art','Karaoke','Film/Screening'].map(t=>`<option value="${t}"${s.type===t?' selected':''}>${t}</option>`).join('')+
+      '</select></div>'+
+      '<div class="fg"><label>Genre</label><input type="text" id="el_genre" value="'+(s.genre||'')+'"></div>'+
+    '</div>'+
+    '<div class="frow">'+
+      '<div class="fg"><label>Age</label><select id="el_age">'+
+        ['All ages','18+','21+'].map(a=>`<option${s.age===a?' selected':''}>${a}</option>`).join('')+
+      '</select></div>'+
+      '<div class="fg"><label>Origin</label><select id="el_origin">'+
+        ['Local','Touring'].map(o=>`<option${s.origin===o?' selected':''}>${o}</option>`).join('')+
+      '</select></div>'+
+    '</div>'+
+    '<div class="fg"><label>Notes</label><textarea id="el_notes">'+(s.notes||'')+'</textarea></div>'+
+    '<div class="fg"><label>Staff pick</label> <input type="checkbox" id="el_sp"'+(s.staff_pick?' checked':'')+' style="accent-color:var(--green);width:auto"> Yes</div>'+
+    '<div class="mf3">'+
+      '<button class="btn outline" onclick="cm(\'detailModal\')">Cancel</button>'+
+      '<button class="btn green" onclick="saveLiveShow('+id+')">&#10003; Save changes</button>'+
+    '</div>';
+  document.getElementById('detailModal').style.display='flex';
+}
+
+async function saveLiveShow(id){
+  const s=shows.find(x=>x.id===id);if(!s)return;
+  const updated={
+    artist:document.getElementById('el_artist').value.trim(),
+    date:document.getElementById('el_date').value,
+    time:document.getElementById('el_time').value||'TBA',
+    venue:s.venue,
+    type:document.getElementById('el_type').value,
+    genre:document.getElementById('el_genre').value,
+    age:document.getElementById('el_age').value,
+    origin:document.getElementById('el_origin').value,
+    neighborhood:s.neighborhood||'',
+    url:s.url||'',
+    notes:document.getElementById('el_notes').value,
+    staff_pick:document.getElementById('el_sp').checked?1:0
+  };
+  await api(`/api/shows/${id}`,{method:'PUT',body:updated});
+  // Update local state
+  Object.assign(s,updated);
+  cm('detailModal');
+  baf();render();renderMod();
 }
 
 function od(id){
