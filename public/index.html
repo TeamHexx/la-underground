@@ -426,7 +426,7 @@ async function api(path,opts={}){
   return res.json();
 }
 
-async function loadShows(){const live=await api('/api/shows');const pending=await api('/api/shows/pending');shows=[...live,...pending];baf();render();upd();}
+async function loadShows(){const live=await api('/api/shows');const pending=await api('/api/shows/pending');shows=[...live,...pending];}
 async function loadSaved(){const saved=await api(`/api/saved?user_id=${UID}`);savedIds=new Set(saved.map(s=>s.id));upd();}
 async function loadPrefs(){const p=await api(`/api/prefs?user_id=${UID}`);if(p.genres)prefs.g=new Set(p.genres);if(p.types)prefs.t=new Set(p.types);if(p.hoods)prefs.h=new Set(p.hoods);if(p.origins)prefs.o=new Set(p.origins);}
 async function loadVenues(){venueList=await api('/api/venues');}
