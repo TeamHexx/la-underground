@@ -6,13 +6,26 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const path = require('path');
 
+// Load .env file for local development
+try { require('dotenv').config(); } catch(e) {}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MOD_PASSWORD = process.env.MOD_PASSWORD || 'changeme';
 
 // ---- MIDDLEWARE ----
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ---- MOD AUTH MIDDLEWARE ----
+function requireMod(req, res, next) {
+  const pw = req.headers['x-mod-password'] || req.query.mod_password;
+  if (pw !== MOD_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
 
 // ---- DATABASE SETUP ----
 const db = new Database('shows.db');
@@ -108,6 +121,16 @@ if (showCount.cnt === 0) {
   seedShows.forEach(s => insertShow.run(s));
 }
 
+// ---- MOD AUTH ENDPOINT ----
+app.post('/api/mod/login', (req, res) => {
+  const { password } = req.body;
+  if (password === MOD_PASSWORD) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ success: false, error: 'Wrong password' });
+  }
+});
+
 // ---- ROUTES: SHOWS ----
 
 // Get all live shows
@@ -118,8 +141,8 @@ app.get('/api/shows', (req, res) => {
   res.json(shows);
 });
 
-// Get pending shows (mod queue)
-app.get('/api/shows/pending', (req, res) => {
+// Get pending shows (mod queue) - PROTECTED
+app.get('/api/shows/pending', requireMod, (req, res) => {
   const shows = db.prepare(`SELECT * FROM shows WHERE status = 'pending' ORDER BY created_at ASC`).all();
   res.json(shows);
 });
@@ -136,22 +159,22 @@ app.post('/api/shows', (req, res) => {
   res.json({ id: result.lastInsertRowid, status: 'pending' });
 });
 
-// Approve a show
-app.patch('/api/shows/:id/approve', (req, res) => {
+// Approve a show - PROTECTED
+app.patch('/api/shows/:id/approve', requireMod, (req, res) => {
   const { staff_pick } = req.body;
   db.prepare(`UPDATE shows SET status = 'live', staff_pick = ? WHERE id = ?`)
     .run(staff_pick ? 1 : 0, req.params.id);
   res.json({ success: true });
 });
 
-// Reject a show
-app.patch('/api/shows/:id/reject', (req, res) => {
+// Reject a show - PROTECTED
+app.patch('/api/shows/:id/reject', requireMod, (req, res) => {
   db.prepare(`UPDATE shows SET status = 'rejected' WHERE id = ?`).run(req.params.id);
   res.json({ success: true });
 });
 
-// Update a show
-app.put('/api/shows/:id', (req, res) => {
+// Update a show - PROTECTED
+app.put('/api/shows/:id', requireMod, (req, res) => {
   const { artist, date, time, venue, type, genre, age, origin, neighborhood, url, notes } = req.body;
   db.prepare(`
     UPDATE shows SET artist=?, date=?, time=?, venue=?, type=?, genre=?, age=?, origin=?, neighborhood=?, url=?, notes=?
@@ -160,8 +183,8 @@ app.put('/api/shows/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// Delete a show
-app.delete('/api/shows/:id', (req, res) => {
+// Delete a show - PROTECTED
+app.delete('/api/shows/:id', requireMod, (req, res) => {
   db.prepare('DELETE FROM shows WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });

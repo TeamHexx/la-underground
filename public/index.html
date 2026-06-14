@@ -191,7 +191,8 @@ body{background:var(--bg);color:#e0e0e0;font-family:var(--font);min-height:100vh
   <div class="tab" id="tab-foryou" onclick="sw('foryou')">&#9733; For you</div>
   <div class="tab" id="tab-karaoke" onclick="sw('karaoke')">&#9834; Karaoke</div>
   <div class="tab" id="tab-saved" onclick="sw('saved')">Saved <span class="tbg s" id="savedBadge">0</span></div>
-  <div class="tab" id="tab-mod" onclick="sw('mod')">Mod queue <span class="tbg" id="modBadge" style="display:none">0</span></div>
+  <div class="tab" id="tab-mod" onclick="sw('mod')" style="display:none">Mod queue <span class="tbg" id="modBadge" style="display:none">0</span></div>
+  <div class="tab" id="tab-modlogin" onclick="openModLogin()">&#128274; Mod</div>
 </div>
 
 <!-- BROWSE -->
@@ -333,6 +334,7 @@ body{background:var(--bg);color:#e0e0e0;font-family:var(--font);min-height:100vh
 <script>
 const API='';
 const UID='default';
+let modPassword=null;
 const TD=new Date();TD.setHours(0,0,0,0);
 const DN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 function ymd(d){return d.toISOString().split('T')[0];}
@@ -422,11 +424,13 @@ function gH(){return[...new Set(shows.filter(s=>s.status==='live').map(s=>s.neig
 function gA(){return[...new Set(KV.map(v=>v.a))].sort();}
 
 async function api(path,opts={}){
-  const res=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});
+  const headers={'Content-Type':'application/json'};
+  if(modPassword) headers['x-mod-password']=modPassword;
+  const res=await fetch(API+path,{headers,...opts,body:opts.body?JSON.stringify(opts.body):undefined});
   return res.json();
 }
 
-async function loadShows(){const live=await api('/api/shows');const pending=await api('/api/shows/pending');shows=[...live,...pending];baf();render();upd();}
+async function loadShows(){const live=await api('/api/shows');shows=[...live];if(modPassword){const pending=await api('/api/shows/pending');shows=[...shows,...pending];}}
 async function loadSaved(){const saved=await api(`/api/saved?user_id=${UID}`);savedIds=new Set(saved.map(s=>s.id));upd();}
 async function loadPrefs(){const p=await api(`/api/prefs?user_id=${UID}`);if(p.genres)prefs.g=new Set(p.genres);if(p.types)prefs.t=new Set(p.types);if(p.hoods)prefs.h=new Set(p.hoods);if(p.origins)prefs.o=new Set(p.origins);}
 async function loadVenues(){venueList=await api('/api/venues');}
@@ -743,5 +747,41 @@ document.addEventListener('DOMContentLoaded',function(){
   modPane.appendChild(liveSection);
 });
 </script>
+<!-- MOD LOGIN MODAL -->
+<div class="mbk" id="modLoginModal" style="display:none" onclick="cmo(event,'modLoginModal')">
+<div class="mo" onclick="event.stopPropagation()" style="max-width:380px">
+  <button class="mc4" onclick="cm('modLoginModal')">&#10005;</button>
+  <h2>&#128274; Mod access</h2>
+  <p style="font-size:11px;color:#888;margin-bottom:1rem">Enter your moderator password to continue</p>
+  <div class="fg"><label>Password</label><input type="password" id="modPwInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')submitModLogin()"></div>
+  <div id="modLoginError" style="font-size:11px;color:#FF453A;margin-bottom:8px;display:none">Wrong password. Try again.</div>
+  <div class="mf3">
+    <button class="btn outline" onclick="cm('modLoginModal')">Cancel</button>
+    <button class="btn green" onclick="submitModLogin()">&#10003; Login</button>
+  </div>
+</div>
+</div>
+
+<script>
+function openModLogin(){if(modPassword){sw('mod');return;}document.getElementById('modLoginModal').style.display='flex';setTimeout(()=>document.getElementById('modPwInput').focus(),100);}
+async function submitModLogin(){
+  const pw=document.getElementById('modPwInput').value;
+  const res=await fetch('/api/mod/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+  const data=await res.json();
+  if(data.success){
+    modPassword=pw;
+    cm('modLoginModal');
+    document.getElementById('modPwInput').value='';
+    document.getElementById('modLoginError').style.display='none';
+    document.getElementById('tab-mod').style.display='flex';
+    document.getElementById('tab-modlogin').style.display='none';
+    await loadShows();
+    sw('mod');
+  } else {
+    document.getElementById('modLoginError').style.display='block';
+  }
+}
+</script>
+
 </body>
 </html>
