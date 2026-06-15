@@ -296,7 +296,7 @@ body{background:var(--bg);color:#e0e0e0;font-family:var(--font);min-height:100vh
   </div>
   <div class="frow">
     <div class="fg"><label>Type *</label><select id="s_type"><option value="">Select...</option><option>Band</option><option>DJ</option><option>Dance</option><option>Art</option><option>Karaoke</option></select></div>
-    <div class="fg"><label>Genre</label><input type="text" id="s_genre" placeholder="Punk, Garage, Techno..."></div>
+    <div class="fg"><label>Genre</label><select id="s_genre"><option value="">Select...</option><option>Punk</option><option>Post-Punk</option><option>Dance</option><option>Hip Hop</option><option>Pop</option><option>Alt Rock</option><option>Emo</option><option>Folk</option><option>Heavy Metal</option><option>Hardcore</option><option>Electronic</option><option>Dark Wave</option><option>Garage</option><option>Indie</option><option>Shoegaze</option><option>Cumbia</option><option>Latin</option><option>Soul / Funk</option><option>Jazz</option><option>Experimental</option><option>Psychedelic</option></select></div>
   </div>
   <div class="frow">
     <div class="fg"><label>Age restriction</label><select id="s_age"><option>All ages</option><option>18+</option><option>21+</option></select></div>
@@ -416,10 +416,11 @@ let af={type:[],genre:[],age:[],origin:[],hood:[]};
 let dp='all',cf='',ct='',curTab='browse';
 let skd=TD.getDay(),kff='all',kaf=[];
 
-const TO=["Band","DJ","Dance","Art","Karaoke"];
+const TO=["Band","DJ","Dance","Art","Karaoke","Film/Screening"];
+const GO=["Punk","Post-Punk","Dance","Hip Hop","Pop","Alt Rock","Emo","Folk","Heavy Metal","Hardcore","Electronic","Dark Wave","Garage","Indie","Shoegaze","Cumbia","Latin","Soul / Funk","Jazz","Experimental","Psychedelic"];
 const AO=["All ages","18+","21+"];
 const OO=["Local","Touring"];
-function gG(){return[...new Set(shows.filter(s=>s.status==='live').map(s=>s.genre))].sort();}
+function gG(){return GO;}
 function gH(){return[...new Set(shows.filter(s=>s.status==='live').map(s=>s.neighborhood).filter(Boolean))].sort();}
 function gA(){return[...new Set(KV.map(v=>v.a))].sort();}
 
@@ -430,7 +431,7 @@ async function api(path,opts={}){
   return res.json();
 }
 
-async function loadShows(){const live=await api('/api/shows');shows=[...live];if(modPassword){const pending=await api('/api/shows/pending');shows=[...shows,...pending];}}
+async function loadShows(){const live=await api('/api/shows');const pending=await api('/api/shows/pending');shows=[...live,...pending];baf();render();upd();}
 async function loadSaved(){const saved=await api(`/api/saved?user_id=${UID}`);savedIds=new Set(saved.map(s=>s.id));upd();}
 async function loadPrefs(){const p=await api(`/api/prefs?user_id=${UID}`);if(p.genres)prefs.g=new Set(p.genres);if(p.types)prefs.t=new Set(p.types);if(p.hoods)prefs.h=new Set(p.hoods);if(p.origins)prefs.o=new Set(p.origins);}
 async function loadVenues(){venueList=await api('/api/venues');}
@@ -775,7 +776,6 @@ async function submitModLogin(){
     document.getElementById('modLoginError').style.display='none';
     document.getElementById('tab-mod').style.display='flex';
     document.getElementById('tab-modlogin').style.display='none';
-    await loadShows();
     sw('mod');
   } else {
     document.getElementById('modLoginError').style.display='block';
