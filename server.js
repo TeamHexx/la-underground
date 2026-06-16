@@ -76,6 +76,9 @@ db.exec(`
   );
 `);
 
+// Ensure unique index exists to prevent duplicate shows
+db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_show_unique ON shows(artist, date, venue)`);
+
 // ---- SEED VENUES ----
 const seedVenues = [
   { name: 'Zebulon', neighborhood: 'Frogtown', website: 'https://www.zebulon.la', calendar_url: 'https://www.zebulon.la/events' },
