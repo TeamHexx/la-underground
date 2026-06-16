@@ -139,7 +139,7 @@ app.post('/api/mod/login', (req, res) => {
 // Get all live shows
 app.get('/api/shows', (req, res) => {
  const shows = db.prepare(`
-    SELECT * FROM shows WHERE status = 'live' AND date >= date('now', '-1 day') ORDER BY date ASC
+    SELECT * FROM shows WHERE status = 'live' AND date >= date('now', 'localtime') ORDER BY date ASC
   `).all(); 
   res.json(shows);
 });
