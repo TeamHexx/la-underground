@@ -28,7 +28,8 @@ function requireMod(req, res, next) {
 }
 
 // ---- DATABASE SETUP ----
-const db = new Database('shows.db');
+const dbPath = process.env.RAILWAY_ENVIRONMENT ? '/app/data/shows.db' : 'shows.db';
+const db = new Database(dbPath);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS shows (
@@ -75,9 +76,6 @@ db.exec(`
     active INTEGER DEFAULT 1
   );
 `);
-
-// Ensure unique index exists to prevent duplicate shows
-db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_show_unique ON shows(artist, date, venue)`);
 
 // ---- SEED VENUES ----
 const seedVenues = [
@@ -138,9 +136,9 @@ app.post('/api/mod/login', (req, res) => {
 
 // Get all live shows
 app.get('/api/shows', (req, res) => {
- const shows = db.prepare(`
-    SELECT * FROM shows WHERE status = 'live' AND date >= date('now', 'localtime') ORDER BY date ASC
-  `).all(); 
+  const shows = db.prepare(`
+    SELECT * FROM shows WHERE status = 'live' AND date >= date('now') ORDER BY date ASC
+  `).all();
   res.json(shows);
 });
 
