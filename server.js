@@ -77,6 +77,12 @@ db.exec(`
   );
 `);
 
+// Remove any existing duplicates before adding the unique constraint
+db.exec(`DELETE FROM shows WHERE id NOT IN (SELECT MIN(id) FROM shows GROUP BY artist, date, venue)`);
+
+// Now safe to create the unique index
+db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_show_unique ON shows(artist, date, venue)`);
+
 // ---- SEED VENUES ----
 const seedVenues = [
   { name: 'Zebulon', neighborhood: 'Frogtown', website: 'https://www.zebulon.la', calendar_url: 'https://www.zebulon.la/events' },
