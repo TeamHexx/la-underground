@@ -142,9 +142,10 @@ app.post('/api/mod/login', (req, res) => {
 
 // Get all live shows
 app.get('/api/shows', (req, res) => {
+  const laDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   const shows = db.prepare(`
-    SELECT * FROM shows WHERE status = 'live' AND date >= date('now') ORDER BY date ASC
-  `).all();
+    SELECT * FROM shows WHERE status = 'live' AND date >= ? ORDER BY date ASC
+  `).all(laDate);
   res.json(shows);
 });
 
@@ -576,7 +577,7 @@ async function scrapeKCRW() {
 
 async function runScraper() {
   console.log('Running scrapers...');
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 
   const insertShow = db.prepare(`
     INSERT OR IGNORE INTO shows (artist, date, time, venue, neighborhood, url, notes, status, source, type, genre, age, origin, staff_pick)
