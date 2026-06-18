@@ -138,6 +138,12 @@ app.post('/api/mod/login', (req, res) => {
   }
 });
 
+app.get('/api/debug', (req, res) => {
+  const laDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+  const utcDate = new Date().toISOString().split('T')[0];
+  res.json({ laDate, utcDate, now: new Date().toString() });
+});
+
 // ---- ROUTES: SHOWS ----
 
 // Get all live shows
