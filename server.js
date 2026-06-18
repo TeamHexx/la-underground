@@ -80,6 +80,9 @@ db.exec(`
 // Remove any existing duplicates before adding the unique constraint
 db.exec(`DELETE FROM shows WHERE id NOT IN (SELECT MIN(id) FROM shows GROUP BY artist, date, venue)`);
 
+// Clear all scraped shows so they get re-pulled with correct LA timezone dates
+db.exec(`DELETE FROM shows WHERE source='scraped'`);
+
 // Now safe to create the unique index
 db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_show_unique ON shows(artist, date, venue)`);
 
@@ -136,18 +139,6 @@ app.post('/api/mod/login', (req, res) => {
   } else {
     res.status(401).json({ success: false, error: 'Wrong password' });
   }
-});
-
-app.get('/api/cleanup', (req, res) => {
-  const laDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-  const result = require('./node_modules/better-sqlite3')('/app/data/shows.db').prepare('DELETE FROM shows WHERE date < ?').run(laDate);
-  res.json({ deleted: result.changes, today: laDate });
-});
-
-app.get('/api/debug', (req, res) => {
-  const laDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-  const utcDate = new Date().toISOString().split('T')[0];
-  res.json({ laDate, utcDate, now: new Date().toString() });
 });
 
 // ---- ROUTES: SHOWS ----
@@ -453,9 +444,12 @@ function detectGenre(text) {
 function parseDate(raw) {
   if (!raw) return null;
   try {
-    // Handle ISO format from JSON-LD (e.g. "2026-07-10T20:00:00")
+    // Handle ISO format from JSON-LD (e.g. "2026-07-10T20:00:00-07:00")
     const d = new Date(raw);
-    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+    if (!isNaN(d.getTime())) {
+      // Use LA timezone to get the correct local date
+      return d.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+    }
   } catch (e) {}
   // Try parsing "Mon, Jul 10" style dates
   try {
@@ -468,7 +462,7 @@ function parseDate(raw) {
       const d = new Date(year, month, day);
       // If date is in the past by more than 30 days, it's probably next year
       if (d < new Date(Date.now() - 30 * 86400000)) d.setFullYear(year + 1);
-      return d.toISOString().split('T')[0];
+      return d.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
     }
   } catch (e) {}
   return null;
