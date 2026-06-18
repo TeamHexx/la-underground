@@ -138,6 +138,12 @@ app.post('/api/mod/login', (req, res) => {
   }
 });
 
+app.get('/api/cleanup', (req, res) => {
+  const laDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+  const result = require('./node_modules/better-sqlite3')('/app/data/shows.db').prepare('DELETE FROM shows WHERE date < ?').run(laDate);
+  res.json({ deleted: result.changes, today: laDate });
+});
+
 app.get('/api/debug', (req, res) => {
   const laDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   const utcDate = new Date().toISOString().split('T')[0];
